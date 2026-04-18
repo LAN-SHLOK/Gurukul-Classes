@@ -33,7 +33,7 @@
     "lucide-react": "^0.454.0",
     "matter-js": "^0.20.0",
     "mongoose": "^8.0.0",
-    "next": "15.3.1",
+    "next": "15.3.8",
     "next-auth": "5.0.0-beta.25",
     "next-cloudinary": "^6.13.0",
     "nodemailer": "^6.9.0",
