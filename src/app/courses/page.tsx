@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import VivusSVG from "@/components/ui/VivusSVG";
-import SplineScene from "@/components/ui/SplineScene";
 
 const COURSES = [
   {
@@ -74,9 +73,9 @@ export default function CoursesPage() {
             transition={{ delay: 0.2 }}
             className="relative z-10 space-y-6"
           >
-            {/* Spline scene floats as decorative accent */}
+            {/* CSS decorative accent */}
             <div className="absolute -top-20 -right-10 w-80 h-80 pointer-events-none opacity-70 hidden lg:block">
-              <SplineScene sceneUrl="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode" />
+              <div className="w-full h-full bg-gradient-to-br from-[#2D31FA]/30 to-transparent rounded-full blur-2xl animate-bounce" style={{ animationDuration: '6s' }} />
             </div>
             <p className="text-lg md:text-2xl font-bold text-white/40 leading-tight max-w-md uppercase italic">
               Specialized tracks designed for objective-based academic excellence.

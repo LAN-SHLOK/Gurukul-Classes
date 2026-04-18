@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/Card";
 import { GraduationCap, Target, Sparkles, BookOpen, Trophy } from "lucide-react";
 import gsap from "gsap";
 import { annotate } from "rough-notation";
-import SplineScene from "@/components/ui/SplineScene";
 import VivusSVG from "@/components/ui/VivusSVG";
 
 const STATS = [
@@ -79,9 +78,9 @@ export default function AboutPage() {
           </div>
 
           <div className="relative">
-            {/* Spline 3D decorative */}
+            {/* CSS 3D decorative */}
             <div className="absolute -top-10 right-0 w-72 h-72 pointer-events-none opacity-60 hidden lg:block">
-              <SplineScene sceneUrl="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode" />
+              <div className="w-full h-full bg-gradient-to-br from-[#2D31FA]/20 to-transparent rounded-full blur-3xl animate-pulse" />
             </div>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
