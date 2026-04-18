@@ -1,106 +1,73 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { io, Socket } from "socket.io-client";
 
 interface UseSocketReturn {
-  socket: Socket | null;
+  socket: null;
   isConnected: boolean;
   on: (event: string, handler: (...args: any[]) => void) => void;
   off: (event: string, handler: (...args: any[]) => void) => void;
 }
 
-let sharedSocket: Socket | null = null;
+type Handler = (...args: any[]) => void;
+
+// Global Pusher instance
+let pusherInstance: any = null;
+const listeners: Map<string, Set<Handler>> = new Map();
+
+function getPusher() {
+  if (typeof window === "undefined") return null;
+  const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
+  const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "ap2";
+  if (!key) return null;
+
+  if (!pusherInstance) {
+    import("pusher-js").then((PusherModule) => {
+      const Pusher = PusherModule.default;
+      pusherInstance = new Pusher(key, { cluster });
+      const channel = pusherInstance.subscribe("gurukul");
+
+      // Forward all events to registered listeners
+      channel.bind_global((event: string, data: any) => {
+        const handlers = listeners.get(event);
+        if (handlers) handlers.forEach((h) => h(data));
+      });
+    });
+  }
+  return pusherInstance;
+}
 
 export function useSocket(): UseSocketReturn {
   const [isConnected, setIsConnected] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  const handlersRef = useRef<Map<string, Handler>>(new Map());
 
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
-    
-    // Log warning in development mode when socket URL is missing
-    if (!socketUrl) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          '[Socket] NEXT_PUBLIC_SOCKET_URL is not configured. Real-time features are disabled. ' +
-          'To enable real-time updates, add NEXT_PUBLIC_SOCKET_URL to your .env.local file.'
-        );
+    const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    if (!key) return;
+
+    // Lazy init
+    getPusher();
+
+    // Poll connection state
+    const interval = setInterval(() => {
+      if (pusherInstance?.connection?.state === "connected") {
+        setIsConnected(true);
       }
-      return; // gracefully disabled if not configured
-    }
+    }, 1000);
 
-    if (!sharedSocket) {
-      sharedSocket = io(socketUrl, {
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
-        reconnectionDelayMax: 30000,
-        transports: ["websocket", "polling"],
-        timeout: 10000,
-      });
-    }
-
-    socketRef.current = sharedSocket;
-
-    const onConnect = () => {
-      setIsConnected(true);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Socket] Connected successfully');
-      }
-    };
-    
-    const onDisconnect = () => {
-      setIsConnected(false);
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[Socket] Disconnected from server');
-      }
-    };
-    
-    const onConnectError = (error: Error) => {
-      console.error(
-        '[Socket] Connection failed. Please check that NEXT_PUBLIC_SOCKET_URL is correctly configured ' +
-        'and the socket server is running.',
-        error
-      );
-    };
-    
-    const onReconnectAttempt = (attemptNumber: number) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Socket] Reconnection attempt ${attemptNumber}/5`);
-      }
-    };
-    
-    const onReconnectFailed = () => {
-      console.error(
-        '[Socket] Failed to reconnect after 5 attempts. Real-time features are unavailable. ' +
-        'Please check your socket server configuration.'
-      );
-    };
-
-    sharedSocket.on("connect", onConnect);
-    sharedSocket.on("disconnect", onDisconnect);
-    sharedSocket.on("connect_error", onConnectError);
-    sharedSocket.on("reconnect_attempt", onReconnectAttempt);
-    sharedSocket.on("reconnect_failed", onReconnectFailed);
-    if (sharedSocket.connected) setIsConnected(true);
-
-    return () => {
-      sharedSocket?.off("connect", onConnect);
-      sharedSocket?.off("disconnect", onDisconnect);
-      sharedSocket?.off("connect_error", onConnectError);
-      sharedSocket?.off("reconnect_attempt", onReconnectAttempt);
-      sharedSocket?.off("reconnect_failed", onReconnectFailed);
-    };
+    return () => clearInterval(interval);
   }, []);
 
-  const on = useCallback((event: string, handler: (...args: any[]) => void) => {
-    socketRef.current?.on(event, handler);
+  const on = useCallback((event: string, handler: Handler) => {
+    if (!listeners.has(event)) listeners.set(event, new Set());
+    listeners.get(event)!.add(handler);
+    handlersRef.current.set(event, handler);
   }, []);
 
-  const off = useCallback((event: string, handler: (...args: any[]) => void) => {
-    socketRef.current?.off(event, handler);
+  const off = useCallback((event: string, handler: Handler) => {
+    listeners.get(event)?.delete(handler);
+    handlersRef.current.delete(event);
   }, []);
 
-  return { socket: socketRef.current, isConnected, on, off };
+  return { socket: null, isConnected, on, off };
 }

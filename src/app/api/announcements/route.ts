@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/db/mongodb";
 import { Announcement } from "@/lib/db/models/Announcement";
+import Pusher from "pusher";
+
+function getPusher() {
+  if (!process.env.PUSHER_APP_ID) return null;
+  return new Pusher({
+    appId: process.env.PUSHER_APP_ID!,
+    key: process.env.PUSHER_KEY!,
+    secret: process.env.PUSHER_SECRET!,
+    cluster: process.env.PUSHER_CLUSTER || "ap2",
+    useTLS: true,
+  });
+}
 
 export async function GET() {
   try {
@@ -20,9 +32,15 @@ export async function POST(req: NextRequest) {
     const { text } = await req.json();
     if (!text?.trim()) return NextResponse.json({ message: "Text required" }, { status: 400 });
     await connectDB();
-    // Deactivate all existing
     await Announcement.updateMany({}, { active: false });
     const ann = await Announcement.create({ text: text.trim(), active: true });
+
+    // Push real-time announcement to all connected students
+    const pusher = getPusher();
+    if (pusher) {
+      await pusher.trigger("gurukul", "announcement", { text: text.trim() });
+    }
+
     return NextResponse.json({ success: true, data: ann }, { status: 201 });
   } catch {
     return NextResponse.json({ message: "Failed" }, { status: 500 });

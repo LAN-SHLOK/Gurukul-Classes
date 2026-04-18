@@ -4,31 +4,35 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Megaphone } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useSocket } from "@/hooks/useSocket";
 
 export default function AnnouncementBanner() {
   const [text, setText] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const { data: session } = useSession();
+  const { on, off } = useSocket();
 
   useEffect(() => {
-    // Only fetch announcements if user is authenticated as a student
-    if (!session || session.user?.role !== "student") {
-      return;
-    }
+    if (!session || session.user?.role !== "student") return;
 
+    // Fetch latest announcement on mount
     fetch("/api/announcements")
       .then(r => r.json())
       .then(d => { if (d?.text) setText(d.text); })
-      .catch((error) => {
-        console.error("Failed to fetch announcements:", error);
-      });
-  }, [session]);
+      .catch(() => {});
 
-  // Return null if user is not a student or not authenticated
-  if (!session || session.user?.role !== "student") {
-    return null;
-  }
+    // Listen for real-time announcements via Pusher
+    const handler = (data: { text: string }) => {
+      if (data?.text) {
+        setText(data.text);
+        setDismissed(false); // re-show on new announcement
+      }
+    };
+    on("announcement", handler);
+    return () => off("announcement", handler);
+  }, [session, on, off]);
 
+  if (!session || session.user?.role !== "student") return null;
   if (!text || dismissed) return null;
 
   return (
