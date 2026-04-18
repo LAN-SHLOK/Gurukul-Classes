@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/mongodb";
+import { connectDB } from "@/lib/db/mongodb";
+import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary
@@ -63,7 +64,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Save to database
-    const db = await getDb();
+    await connectDB();
+    const db = mongoose.connection.db!;
     const application = {
       name,
       email,
@@ -104,7 +106,8 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     // TODO: Add authentication check for admin
-    const db = await getDb();
+    await connectDB();
+    const db = mongoose.connection.db!;
     const applications = await db
       .collection("faculty_applications")
       .find({})
@@ -133,7 +136,8 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const db = await getDb();
+    await connectDB();
+    const db = mongoose.connection.db!;
     const { ObjectId } = await import("mongodb");
     
     const result = await db.collection("faculty_applications").updateOne(
@@ -170,7 +174,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const db = await getDb();
+    await connectDB();
+    const db = mongoose.connection.db!;
     const { ObjectId } = await import("mongodb");
     
     const result = await db.collection("faculty_applications").deleteOne(
