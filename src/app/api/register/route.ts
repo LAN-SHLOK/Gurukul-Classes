@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { Student } from "@/lib/db/models/Student";
 import bcrypt from "bcryptjs";
+import { sendWelcomeEmail } from "@/lib/services/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +35,13 @@ export async function POST(req: NextRequest) {
     });
 
     await newStudent.save();
+
+    // Send Welcome Email
+    try {
+      await sendWelcomeEmail(email, firstName);
+    } catch (emailErr) {
+      console.error("[Register] Welcome email failed:", emailErr);
+    }
 
     return NextResponse.json({ success: true, message: "Student registered successfully" });
   } catch (error: any) {

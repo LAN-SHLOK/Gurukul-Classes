@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google"
 import { connectDB } from "@/lib/db/mongodb"
 import { Student } from "@/lib/db/models/Student"
 import bcrypt from "bcryptjs"
+import { sendWelcomeEmail } from "@/lib/services/email"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -62,6 +63,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               provider: "google",
               password: null,
             })
+            // Send Welcome Email
+            try {
+              await sendWelcomeEmail(user.email, nameParts[0] || "Student")
+            } catch (emailErr) {
+              console.error("[Auth] Welcome email failed:", emailErr)
+            }
           }
         } catch (err) {
           console.error("[Auth] Google sign-in DB error:", err)

@@ -100,3 +100,59 @@ export async function sendInquiryConfirmation(inquiry: {
 
   await transporter.sendMail(mailOptions);
 }
+
+export async function sendWelcomeEmail(email: string, firstName: string) {
+  const mailOptions = {
+    from: `"Gurukul Classes" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Welcome to the Gurukul Family! 🎓",
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 0; border: 1px solid #eee; border-radius: 16px; overflow: hidden; background: #ffffff; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
+        <!-- Hero Section -->
+        <div style="background: linear-gradient(135deg, #2D31FA 0%, #1a1db8 100%); padding: 60px 40px; text-align: center; color: white;">
+          <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px;">Welcome, ${firstName}!</h1>
+          <p style="margin: 10px 0 0; opacity: 0.8; font-size: 16px; font-weight: 500;">Your journey towards academic excellence starts here.</p>
+        </div>
+
+        <!-- content -->
+        <div style="padding: 40px;">
+          <p style="font-size: 16px; color: #333; line-height: 1.6;">
+            We are thrilled to welcome you to <b>Gurukul Classes</b>. You have officially joined a community dedicated to building strong foundations and achieving elite results.
+          </p>
+          
+          <div style="background: #f8f9ff; border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #2D31FA;">
+            <h3 style="margin: 0 0 10px; color: #2D31FA; font-size: 18px;">What's next for you?</h3>
+            <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
+              <li style="margin-bottom: 8px;">Explore your <b>Personalized Dashboard</b></li>
+              <li style="margin-bottom: 8px;">Access high-quality <b>AI Study Notes</b></li>
+              <li style="margin-bottom: 8px;">Connect with our <b>Academic Mentor</b></li>
+              <li>Stay updated with the latest <b>Schedule & Announcements</b></li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin: 40px 0;">
+            <a href="https://gurukulclasses.in/dashboard" style="background: #2D31FA; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(45,49,250,0.3);">
+              Go to My Dashboard
+            </a>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          
+          <p style="font-size: 14px; color: #888; text-align: center; line-height: 1.6;">
+            Need help? Reach out to us at <br>
+            <a href="mailto:Gurukulclasses001@gmail.com" style="color: #2D31FA; text-decoration: none; font-weight: 600;">Gurukulclasses001@gmail.com</a>
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #fafafa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
+          <p style="color: #bbb; font-size: 11px; margin: 0; text-transform: uppercase; letter-spacing: 2px;">
+            &copy; 2026 Gurukul Classes | Foundation for Future
+          </p>
+        </div>
+      </div>
+    `
+  };
+
+  await transporter.sendMail(mailOptions);
+}
