@@ -34,7 +34,9 @@ export default function AINoteGenerator({ onSuccess, standards }: AINoteGenerato
       });
       const data = await res.json();
       if (data.success) {
-        setStep("preview"); // In background mode, this acts as the "Queued" confirmation
+        setGeneratedContent(data.content || "PDF generated successfully.");
+        setFileUrl(data.file_url || "");
+        setStep("preview");
       } else {
         alert(data.error || "Generation failed");
       }
@@ -46,13 +48,14 @@ export default function AINoteGenerator({ onSuccess, standards }: AINoteGenerato
   };
 
   const handleSave = () => {
-    // In background mode, we don't 'save' here, we just close
     setStep("done");
-    onSuccess({ title, subject, standard, file_url: "" }); // Trigger refresh
+    onSuccess({ title, subject, standard, file_url: fileUrl });
     setTimeout(() => {
       setIsOpen(false);
       setStep("input");
       setPrompt("");
+      setGeneratedContent("");
+      setFileUrl("");
     }, 2000);
   };
 

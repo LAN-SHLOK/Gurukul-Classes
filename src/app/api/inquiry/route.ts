@@ -3,7 +3,6 @@ import { connectDB } from "@/lib/db/mongodb";
 import { Inquiry } from "@/lib/db/models/Inquiry";
 import { sendInquiryNotification, sendInquiryConfirmation } from "@/lib/services/email";
 import { rateLimit, getIP } from "@/lib/rate-limiter";
-import { emailQueue } from "@/lib/queue/client";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -49,14 +48,26 @@ export async function POST(req: NextRequest) {
     });
     await newInquiry.save();
 
-    // 4. Offload Emails to Queue (Async Processing)
-    await emailQueue.add(`inquiry-${newInquiry._id}`, {
-      first_name: newInquiry.first_name,
-      last_name: newInquiry.last_name,
-      email: newInquiry.email,
-      class_name: newInquiry.class_name,
-      message: newInquiry.message,
-    });
+    // Send emails inline (fast operation, <2 seconds)
+    try {
+      await Promise.all([
+        sendInquiryNotification({
+          first_name: newInquiry.first_name,
+          last_name: newInquiry.last_name,
+          email: newInquiry.email,
+          class_name: newInquiry.class_name,
+          message: newInquiry.message,
+          created_at: newInquiry.created_at,
+        }),
+        sendInquiryConfirmation({
+          first_name: newInquiry.first_name,
+          email: newInquiry.email,
+        }),
+      ]);
+    } catch (emailErr) {
+      // Log but don't fail the request if emails fail
+      console.error("[Inquiry] Email notification failed:", emailErr);
+    }
 
     return NextResponse.json({ success: true, message: "Inquiry submitted successfully" });
   } catch (error) {

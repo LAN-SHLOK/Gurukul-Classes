@@ -1,6 +1,6 @@
 # Gurukul Classes Platform
 
-A production-grade, enterprise-scale educational management system and AI-powered learning hub designed for Gurukul Classes, Ahmedabad. This ecosystem combines a high-performance Next.js frontend with a specialized Python AI microservice, backed by a robust asynchronous infrastructure.
+A production-grade, enterprise-scale educational management system and AI-powered learning hub designed for Gurukul Classes, Ahmedabad. This ecosystem combines a high-performance Next.js frontend with a specialized Python AI microservice.
 
 ---
 
@@ -10,31 +10,27 @@ A production-grade, enterprise-scale educational management system and AI-powere
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![BullMQ](https://img.shields.io/badge/BullMQ-FF4500?style=for-the-badge&logo=micro-strategy&logoColor=white)](https://bullmq.io/)
 [![Pusher](https://img.shields.io/badge/Pusher-300D4F?style=for-the-badge&logo=pusher&logoColor=white)](https://pusher.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion/)
+[![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 
 ---
 
 ## System Architecture
 
-The platform follows a distributed microservices pattern to ensure zero-downtime background processing and high scalability.
+The platform follows a clean two-service architecture: a Next.js frontend hosted on Vercel and a Python AI microservice on Render.
 
 ```mermaid
 graph TD
-    User([User Browser]) -->|Next.js App| NextApp[Next.js Server]
-    NextApp -->|HTTP| PythonAI[Python AI Service]
-    NextApp -->|Add Job| Redis[(Redis Queue)]
-    Redis -->|Process| Worker[Background Worker]
-    Worker -->|Fetch| PythonAI
-    Worker -->|Generate PDF| Worker
-    Worker -->|Store| Cloudinary[Cloudinary]
-    Worker -->|Email| SMTP[SMTP Server]
+    User([User Browser]) -->|Next.js App| NextApp[Next.js Server - Vercel]
+    NextApp -->|HTTP| PythonAI[Python AI Service - Render]
+    NextApp -->|Inline PDF| Cloudinary[Cloudinary]
+    NextApp -->|Inline Email| SMTP[SMTP Server]
     NextApp -->|Real-time| Pusher((Pusher))
-    NextApp -->|Auth| NextAuth[NextAuth.js]
+    NextApp -->|Auth| NextAuth[Auth.js v5]
     NextApp -->|Query| MongoDB[(MongoDB)]
+    PythonAI -->|RAG Context| MongoDB
 ```
 
 ---
@@ -45,13 +41,13 @@ graph TD
 - **Academic Mentor**: Llama-3.3-70B powered tutor with deep knowledge of Gujarat Board (GSEB), NCERT, JEE, and NEET.
 - **Course Catalog**: Comprehensive overview of Foundation, Board, and Competitive exam coaching.
 - **Topper Gallery**: Performance tracking and public recognition for top-performing students.
-- **Faculty & Events**: Dynamic directory of educators and real-time institute event calendars.
+- **Faculty and Events**: Dynamic directory of educators and real-time institute event calendars.
 - **Admissions Pipeline**: Structured inquiry forms and career/faculty application portals.
 
-### 2. Admin & Staff Control Center
+### 2. Admin and Staff Control Center
 - **Institutional Management**: Control over Faculty, Events, Toppers, and public Announcements.
-- **Attendance & Schedules**: Centralized tracking of student attendance and dynamic classroom scheduling.
-- **Content Architect**: AI-powered tool for generating branded, illustrated study modules (PDF) in the background.
+- **Attendance and Schedules**: Centralized tracking of student attendance and dynamic classroom scheduling.
+- **Content Architect**: AI-powered tool for generating branded, illustrated study modules (PDF) with inline processing (`maxDuration=60`).
 - **Push Notification Engine**: Real-time admin alerts and system notifications via Pusher.
 - **Staff Ecosystem**: Specialized dashboard for teaching staff to manage student data and classroom operations.
 
@@ -65,10 +61,11 @@ A dedicated Python/FastAPI microservice handling all intelligent computations.
 
 ## Infrastructure Core
 
-### 1. Async Processing (BullMQ + Redis)
-Offloads intensive tasks to background workers:
-- **Async PDF Generation**: Auto-creates branded PDFs with embedded AI diagrams.
-- **Notification Queue**: Background delivery of SMTP emails for inquiries and staff updates.
+### 1. Inline AI Processing (Vercel `maxDuration=60`)
+All AI-intensive tasks run inline within the API route, leveraging Vercel's extended timeout:
+- **PDF Generation**: Auto-creates branded PDFs with embedded AI diagrams via jsPDF.
+- **Cloudinary Upload**: Stores generated PDFs for permanent access.
+- **Email Delivery**: Inline SMTP dispatch for inquiry notifications and confirmations.
 
 ### 2. Observability (Winston)
 Comprehensive logging layer for system health:
@@ -77,8 +74,8 @@ Comprehensive logging layer for system health:
 
 ### 3. Security Hardening
 - **IP Rate Limiting**: Multi-tier throttling for public APIs and admin actions.
-- **Auth.js Integration**: Secure Google OAuth and Credentials-based authentication.
-- **Security Middleware**: Strict Content Security Policy (CSP), XSTS, and XSS protection.
+- **Auth.js v5 Integration**: Secure Google OAuth and Credentials-based authentication.
+- **Security Middleware**: Strict Content Security Policy (CSP), HSTS, and XSS protection.
 
 ---
 
@@ -101,32 +98,33 @@ Comprehensive logging layer for system health:
 
 ```text
 ├── ai-service/              # Python AI Microservice (Expert Brain)
-├── scripts/                 # System utilities & worker runners
 ├── src/
-│   ├── app/                 # Next.js App Router (Routes & APIs)
-│   ├── components/          # UI Components (Shadcn + Framer)
+│   ├── app/                 # Next.js App Router (Routes and APIs)
+│   ├── components/          # UI Components (Radix + Framer Motion)
 │   ├── lib/
-│   │   ├── db/              # Mongoose Models & Schemas
-│   │   ├── queue/           # BullMQ Client & Workers
+│   │   ├── db/              # Mongoose Models and Schemas
 │   │   ├── services/        # AI, Email, and Cloudinary logic
 │   │   ├── logger.ts        # Winston Logging Engine
 │   │   └── rate-limiter.ts  # Advanced Throttling Logic
-│   └── middleware.ts        # Security & Traffic Traces
+│   └── middleware.ts        # Security and Traffic Traces
 └── logs/                    # Production JSON Log Storage
 ```
 
 ---
 
-## Setup & Deployment
+## Setup and Deployment
 
 ### Environment Configuration
 The platform requires a `.env.local` containing:
-- `MONGODB_URI`, `REDIS_HOST`, `GROQ_API_KEY`, `PYTHON_AI_URL`, `CLOUDINARY_URL`, `PUSHER_APP_ID`.
+- `MONGODB_URI`, `GROQ_API_KEY`, `PYTHON_AI_URL`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `PUSHER_APP_ID`.
 
-### Bootstrapping
+### Deployment Architecture
+1. **Frontend (Vercel)**: `npm run build` -- automatic via Git push.
+2. **AI Service (Render)**: `uvicorn main:app --host 0.0.0.0 --port 8000`
+
+### Local Development
 1. **Frontend**: `npm run dev`
-2. **AI Service**: `uvicorn main:app --port 8000`
-3. **Background Workers**: `npx tsx scripts/run-workers.ts`
+2. **AI Service**: `cd ai-service && uvicorn main:app --port 8000`
 
 ---
 
