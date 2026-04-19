@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({ 
+    req, 
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET 
+  });
   const { pathname } = req.nextUrl;
   const start = Date.now();
 
@@ -26,7 +29,7 @@ export async function middleware(req: NextRequest) {
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https://*.googleusercontent.com https://*.cloudinary.com https://images.unsplash.com https://*.pusher.com;
     font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' https://*.google.com https://*.googleapis.com https://*.pusher.com wss://*.pusher.com https://*.cloudinary.com https://api.groq.com;
+    connect-src 'self' https://*.google.com https://*.googleapis.com https://*.pusher.com wss://*.pusher.com https://*.cloudinary.com https://*.onrender.com https://api.groq.com;
     frame-src 'self' https://*.google.com;
     object-src 'none';
     base-uri 'self';
