@@ -23,9 +23,6 @@ export default function Header() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  // Hide on admin and staff pages
-  if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
-
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -38,6 +35,9 @@ export default function Header() {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
+
+  // Hide on admin and staff pages
+  if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
 
   return (
     <>

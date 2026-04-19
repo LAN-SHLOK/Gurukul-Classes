@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const standard = new URL(req.url).searchParams.get("standard");
-    const query = standard ? { standard } : {};
+    const query = standard ? { standard: new RegExp(`^${standard.trim()}$`, "i") } : {};
     const notes = await Note.find(query).sort({ created_at: -1 });
     return NextResponse.json(notes);
   } catch {

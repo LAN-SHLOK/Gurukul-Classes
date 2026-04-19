@@ -55,10 +55,11 @@ export async function POST(req: NextRequest) {
 
     configureCloudinary();
     
-    // Use resource_type: "auto" to handle both images and raw files (PDF/Docs)
+    // Use resource_type: "raw" for PDFs and Docs to prevent Cloudinary 401 restrictions
+    const isImage = file.type.startsWith("image/");
     const result = await cloudinary.uploader.upload(dataUri, {
       folder: "gurukul-classes",
-      resource_type: "auto",
+      resource_type: isImage ? "auto" : "raw",
       public_id: file.name.split(".")[0] + "_" + Date.now(),
     });
 

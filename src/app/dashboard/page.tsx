@@ -168,10 +168,10 @@ export default function Dashboard() {
       .then(r => r.json())
       .then(d => {
         if (Array.isArray(d)) {
-          // Filter by enrolled subjects if available
-          const enrolled = studentData.enrolledSubjects || [];
+          // Filter by enrolled subjects if available (case-insensitive & trimmed)
+          const enrolled = (studentData.enrolledSubjects || []).map((s: string) => s.toLowerCase().trim());
           const filtered = enrolled.length > 0
-            ? d.filter((n: any) => enrolled.includes(n.subject))
+            ? d.filter((n: any) => enrolled.includes((n.subject || "").toLowerCase().trim()))
             : d;
           setNotes(filtered);
         }

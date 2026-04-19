@@ -992,7 +992,7 @@ function ContentSection() {
     setLoading(true);
     try {
       const endpoint = subTab === "notes" ? "/api/admin/notes" : `/api/admin/${subTab}`;
-      const res = await fetch(endpoint);
+      const res = await fetch(`${endpoint}?t=${Date.now()}`);
       const d = await res.json();
       setItems(Array.isArray(d) ? d : []);
     } catch {} finally { setLoading(false); }
@@ -1042,11 +1042,36 @@ function ContentSection() {
                   {item.role || item.date || item.subject || item.exam || item.standard}
                 </p>
                 {item.file_url && (
-                  <a href={item.file_url} target="_blank" rel="noopener noreferrer"
-                    className="text-[9px] font-black text-[#2D31FA] uppercase tracking-widest hover:underline"
-                    onClick={e => e.stopPropagation()}>
-                    View File
-                  </a>
+                  <div className="flex items-center gap-3 mt-1" onClick={e => e.stopPropagation()}>
+                    <a href={item.file_url} target="_blank" rel="noopener noreferrer"
+                      className="text-[9px] font-black text-[#2D31FA] uppercase tracking-widest hover:underline">
+                      View File
+                    </a>
+                    {subTab === "notes" && (
+                      <button onClick={async () => {
+                        const confirmSend = confirm(`Send push notification to all students for ${item.title}?`);
+                        if (!confirmSend) return;
+                        try {
+                          const res = await fetch("/api/push/send", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              title: `New Note: ${item.title}`,
+                              body: `A new ${item.subject || "subject"} note has been added for ${item.standard || "your class"}.`,
+                              url: "/dashboard"
+                            })
+                          });
+                          if (res.ok) alert("Notifications sent successfully!");
+                          else alert("Failed to send notifications.");
+                        } catch (err) {
+                          alert("Error sending notifications.");
+                        }
+                      }}
+                        className="text-[9px] font-black text-green-400 uppercase tracking-widest hover:underline border border-green-500/20 px-2 py-0.5 rounded-md bg-green-500/10">
+                        Send to Students
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
               <button onClick={() => handleDelete(item._id)}
@@ -1170,7 +1195,7 @@ function ApplicationsSection() {
   const fetchApplications = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/join-faculty");
+      const res = await fetch(`/api/join-faculty?t=${Date.now()}`);
       const data = await res.json();
       setApplications(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -1376,7 +1401,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const fetchStudents = useCallback(async () => {
     try { 
-      const res = await fetch("/api/admin/students"); 
+      const res = await fetch(`/api/admin/students?t=${Date.now()}`); 
       const d = await res.json(); 
       setStudents(Array.isArray(d) ? d : []); 
     }
@@ -1387,7 +1412,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const fetchSchedules = useCallback(async () => {
     try { 
-      const res = await fetch("/api/admin/schedules"); 
+      const res = await fetch(`/api/admin/schedules?t=${Date.now()}`); 
       const d = await res.json(); 
       setSchedules(Array.isArray(d) ? d : []); 
     }
@@ -1398,7 +1423,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const fetchInquiries = useCallback(async () => {
     try { 
-      const res = await fetch("/api/admin/inquiries"); 
+      const res = await fetch(`/api/admin/inquiries?t=${Date.now()}`); 
       const d = await res.json(); 
       setInquiries(Array.isArray(d) ? d : []); 
     }
