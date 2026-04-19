@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, answer: FALLBACK }, { status: 400 });
     }
 
-    const res = await fetch(`${PYTHON_AI_URL}/api/ai-chat`, {
+    const res = await fetch(`${PYTHON_AI_URL}/api/academic-mentor`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: query.trim() }),
